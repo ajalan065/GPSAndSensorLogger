@@ -70,6 +70,7 @@ import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.*;
+import java.util.regex.Matcher;
 
 import static android.content.Context.NOTIFICATION_SERVICE;
 import static android.content.pm.ActivityInfo.*;
@@ -135,7 +136,7 @@ public class Extras extends Fragment {
     //boolean GPS_STARTED=false;
     PowerManager powerManager;
     PowerManager.WakeLock wakeLock;
-    ProgressBar lightMeter, soundMeter;
+    ProgressBar lightMeter, soundMeter, accMeter;
     Logger logger;
 
     private FileOutputStream fosrate;
@@ -398,10 +399,11 @@ public class Extras extends Fragment {
         powerManager=(PowerManager) getActivity().getSystemService(Context.POWER_SERVICE);
         wakeLock=powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK,"LoggerWakeLock");
 
+        accMeter = (ProgressBar)getActivity().findViewById(R.id.accmeter);
         lightMeter = (ProgressBar)getActivity().findViewById(R.id.lightmeter);
         soundMeter = (ProgressBar)getActivity().findViewById(R.id.soundmeter);
 
-        bmpbrkBtn=(Button)getActivity().findViewById(R.id.btnLM1);
+        /*bmpbrkBtn=(Button)getActivity().findViewById(R.id.btnLM1);
         potholeBtn=(Button)getActivity().findViewById(R.id.btnLM2);
         bmpwobrkBtn=(Button)getActivity().findViewById(R.id.btnLM3);
         immdBtn=(Button)getActivity().findViewById(R.id.btnLM4);
@@ -415,15 +417,6 @@ public class Extras extends Fragment {
         rghBtn = (Button)getActivity().findViewById(R.id.btnLM12);
         bsyBtn = (Button)getActivity().findViewById(R.id.btnLM13);
 
-        /*checkACC=(MenuItem)getActivity().findViewById(R.id.checkACC);
-        checkLACC=(MenuItem)getActivity().findViewById(R.id.checkLACC);
-        checkGYR=(MenuItem)getActivity().findViewById(R.id.checkGYR);
-        checkCOM=(MenuItem)getActivity().findViewById(R.id.checkCOM);
-        checkGPS=(MenuItem)getActivity().findViewById(R.id.checkGPS);
-        checkGSM=(MenuItem)getActivity().findViewById(R.id.checkGSM);
-        checkWiFi=(MenuItem)getActivity().findViewById(R.id.checkWiFi);
-        checkLGT = (MenuItem)getActivity().findViewById(R.id.checkLGT);*/
-
         bmpbrkImg=(ImageView)getActivity().findViewById(R.id.imgLM1);
         potholeImg=(ImageView)getActivity().findViewById(R.id.imgLM2);
         bmpwobrkImg=(ImageView)getActivity().findViewById(R.id.imgLM3);
@@ -435,7 +428,7 @@ public class Extras extends Fragment {
         jupImg=(ImageView)getActivity().findViewById(R.id.imgLM9);
         jdownImg=(ImageView)getActivity().findViewById(R.id.imgLM10);
         nrmlImg=(ImageView)getActivity().findViewById(R.id.imgLM11);
-        rghImg=(ImageView)getActivity().findViewById(R.id.imgLM12);
+        rghImg=(ImageView)getActivity().findViewById(R.id.imgLM12);*/
 
         /*
         checkGPS.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
@@ -465,7 +458,7 @@ public class Extras extends Fragment {
         });
         */
 
-        bmpbrkBtn.setOnClickListener(new LMButtonClickListener());
+        /*bmpbrkBtn.setOnClickListener(new LMButtonClickListener());
         potholeBtn.setOnClickListener(new LMButtonClickListener());
         bmpwobrkBtn.setOnClickListener(new LMButtonClickListener());
         immdBtn.setOnClickListener(new LMButtonClickListener());
@@ -477,7 +470,7 @@ public class Extras extends Fragment {
         jdownBtn.setOnClickListener(new LMButtonClickListener());
         nrmlBtn.setOnClickListener(new LMButtonClickListener());
         rghBtn.setOnClickListener(new LMButtonClickListener());
-        bsyBtn.setOnClickListener(new LMButtonClickListener());
+        bsyBtn.setOnClickListener(new LMButtonClickListener());*/
 
 
 
@@ -758,7 +751,7 @@ public class Extras extends Fragment {
                             case DialogInterface.BUTTON_POSITIVE:
                                 //Yes Button Clicked
                                 try {
-                                    noiseCapture.stopRecording();
+                                    noiseCapture.stopRecording(soundMeter);
                                     if (mRecorder != null) {
                                         mRecorder.stop();
                                         mRecorder.release();
@@ -1234,6 +1227,7 @@ public class Extras extends Fragment {
                         }
                     }
                     String accSensorDetails="\n"+x+","+y+","+z+","+timestampFormatted+","+marker;
+                    accMeter.setProgress((int)Math.sqrt((Math.pow(event.values[0],2)+ Math.pow(event.values[1],2)+ Math.pow(event.values[2],2))));
                     try{
                         fosACC.write(accSensorDetails.getBytes());
                     }catch(Exception e){
@@ -1535,6 +1529,7 @@ public class Extras extends Fragment {
         }
 
         if(lightStarted){
+            lightMeter.setProgress(0);
             try{
                 lightSensorManager.unregisterListener(lightSensorEventListener);
                 fosLGT.close();
@@ -1573,6 +1568,7 @@ public class Extras extends Fragment {
             }
         }
         if(accStarted){
+            accMeter.setProgress(0);
             try{
                 accSensorManager.unregisterListener(accSensorEventListener);
                 fosACC.close();
@@ -1668,7 +1664,7 @@ public class Extras extends Fragment {
         }
     }
 
-    class LMButtonClickListener implements View.OnClickListener{
+    /*class LMButtonClickListener implements View.OnClickListener {
         @Override
         public void onClick(View v){
             int buttonId=v.getId();
@@ -1784,7 +1780,7 @@ public class Extras extends Fragment {
                         showDialog("Turn");
                     }
                     break;
-                }
+                }*/
                 /*
                 case R.id.btnLM8:{
                     if(frtrn==0){
@@ -1804,7 +1800,7 @@ public class Extras extends Fragment {
                 }*/
 
 
-                case R.id.btnLM13:{
+                /*case R.id.btnLM13:{
                     if(frtrn==0){
                         rBtn.setTextColor(Color.RED);
                         rImg.setImageResource(R.drawable.btn_overtake1);
@@ -1889,7 +1885,7 @@ public class Extras extends Fragment {
                 }
             }
         }
-    }
+    }*/
     class WifiReceiver extends BroadcastReceiver {
         public void onReceive(Context c, Intent intent) {
             List wifiList = mainWifi.getScanResults();

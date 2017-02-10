@@ -70,59 +70,6 @@ public class MainActivity extends ActionBarActivity implements SelectItemFragmen
         if (item.getItemId() == R.id.action_settings ) {
             return true;
         }
-            /*switch (item.getItemId()) {
-                case R.id.action_settings:
-                    return true;
-                case R.id.checkGPS:
-                    if (item.isChecked())
-                        item.setChecked(false);
-                    else item.setChecked(true);
-
-                    return true;
-                case R.id.checkACC:
-                    if (item.isChecked())
-                        item.setChecked(false);
-                    else item.setChecked(true);
-
-                    return true;
-                case R.id.checkLACC:
-                    if (item.isChecked())
-                        item.setChecked(false);
-                    else item.setChecked(true);
-
-                    return true;
-                case R.id.checkGYR:
-                    if (item.isChecked())
-                        item.setChecked(false);
-                    else item.setChecked(true);
-
-                    return true;
-                case R.id.checkCOM:
-                    if (item.isChecked())
-                        item.setChecked(false);
-                    else item.setChecked(true);
-
-                    return true;
-                case R.id.checkGSM:
-                    if (item.isChecked())
-                        item.setChecked(false);
-                    else item.setChecked(true);
-
-                    return true;
-                case R.id.checkWiFi:
-                    if (item.isChecked())
-                        item.setChecked(false);
-                    else item.setChecked(true);
-
-                    return true;
-                case R.id.checkLGT:
-                    if (item.isChecked())
-                        item.setChecked(false);
-                    else item.setChecked(true);
-
-                    return true;
-                default: return super.onOptionsItemSelected(item);
-            }*/
         return super.onOptionsItemSelected(item);
     }
 

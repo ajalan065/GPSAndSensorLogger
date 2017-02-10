@@ -546,10 +546,11 @@ public class NoiseCapture {
 
     }
 
-    public void stopRecording() {
+    public void stopRecording(final ProgressBar soundMeter) {
         // stops the recording activity
         if (recorder != null) {
             isRecording = false;
+            soundMeter.setProgress(0);
             try {
                 recordingThread.join();
                 //fos.close();
