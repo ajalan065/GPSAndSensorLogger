@@ -84,10 +84,11 @@ public class Extras extends Fragment {
     FragmentTransaction fragmentTransaction;
     private FileOutputStream fosGPS,fosACC,fosLACC,fosCOM,fosGYR,fosGSM, fosWiFi , fosLGT,fosBatteryLog, fosSND;
     private LocationManager locationManager;
+    private Location loc1, loc2;
     private LocationListener locationListener;
     private SensorManager accSensorManager, laccSensorManager,comSensorManager,gyrSensorManager, lightSensorManager;
     private TelephonyManager mTelManager;
-    private SensorEventListener accSensorEventListener,laccSensorEventListener,comSensorEventListener,gyrSensorEventListener, lightSensorEventListener;
+    private SensorEventListener tSensorEventListener, accSensorEventListener,laccSensorEventListener,comSensorEventListener,gyrSensorEventListener, lightSensorEventListener;
     PhoneStateListener mSignalListener;
     MediaRecorder mRecorder = null;
     Timer t = new  Timer();
@@ -109,6 +110,10 @@ public class Extras extends Fragment {
 
     private int fbmpbrk=0, fbmpwobrk=0, fpothole=0,fimmd=0,fslow=0,futrn=0,fltrn=0,frtrn=0,fjup=0,fjdown=0, fnrml=0, frgh=0;
     private int cbmpbrk=0, cbmpwobrk=0, cpothole=0,cimmd=0,cslow=0,cutrn=0,cltrn=0,crtrn=0,cjup=0,cjdown=0, cnrml=0, crgh=0;
+    private boolean tInitialized;
+    private final float NOISE = (float) 2.0;
+    private float mLastX, mLastY, mLastZ;
+    private double lastLat, lastLon;
     private String bumpbrkStr="Bump with Brake" ,bumpwobrkStr="Bump w/o Brake",potholeStr="PothHole",immdStr="Immediate Brake",slowStr="Slow Brake", uStr="U Turn", lStr="Turn", jupStr="Jerk Up", jdownStr="Jerk Down",nrmlStr="Normal Road",rghStr="Rough Road",bsyStr="Busy Road";
 
     private String marker="";
@@ -126,6 +131,7 @@ public class Extras extends Fragment {
     private Long time;
     private WifiManager mainWifi;
     private WifiReceiver receiverWifi;
+
 
     TextView errorTextView;
 
@@ -157,6 +163,15 @@ public class Extras extends Fragment {
     private final static int NUMBER_OF_FFT_PER_SECOND = RECORDER_SAMPLERATE
             / BLOCK_SIZE_FFT;
     NoiseCapture noiseCapture = new NoiseCapture();
+
+
+    // for turns
+    private float[] mAccelerometerValues;
+    private float[] mGeomagneticValues;
+    private float[] mR = new float[9];
+    private float[] mI = new float[9];
+    private float[] mOrientation = new float[3];
+    private float[] mROut = new float[mR.length];
 
     /**
      * Create a subfolder whenever the fragment is started
@@ -203,6 +218,7 @@ public class Extras extends Fragment {
         //called only once in the lifetime of fragment. When the fragment is added to the app first.
         super.onCreate(savedInstanceState);
         setHasOptionsMenu(true);
+        tInitialized = false;
         Log.d("Surji","LoggerFrag_OnCreate Has Called");
         createFolder();
     }
@@ -783,6 +799,10 @@ public class Extras extends Fragment {
 
             }
         });
+
+
+        // detect and save the turns
+        //detectTurns();
     }
 
     private void initiateLandMarks(){
@@ -959,6 +979,7 @@ public class Extras extends Fragment {
                 if(checkGPS && !locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)){
                     ShowMessage.ShowMessage(getActivity(),"Warning..!","Your GPS is disabled. Please Enable GPS and try again.");
                 } else {
+                    lastLat= lastLon = 0.0;
                     if(subfolder_exists){
                         getActivity().findViewById(R.id.btnStartAll).setEnabled(false);
                         getActivity().findViewById(R.id.btnPause).setEnabled(true);
@@ -1101,6 +1122,18 @@ public class Extras extends Fragment {
             }
         },3000);
     }*/
+
+    private double bearing(double startLat, double startLng, double endLat, double endLng){
+        double longitude1 = startLng;
+        double longitude2 = endLng;
+        double latitude1 = Math.toRadians(startLat);
+        double latitude2 = Math.toRadians(endLat);
+        double longDiff= Math.toRadians(longitude2-longitude1);
+        double y= Math.sin(longDiff)*Math.cos(latitude2);
+        double x=Math.cos(latitude1)*Math.sin(latitude2)-Math.sin(latitude1)*Math.cos(latitude2)*Math.cos(longDiff);
+        return (Math.toDegrees(Math.atan2(y, x))+360)%360;
+    }
+
     private void gpsStartRecord(){
 
         String gpsFilename="GPS_"+timestamp.toString().replace(' ', '_').replace('-', '_').replace(':', '_').replace('.', '_')+".txt";
@@ -1120,10 +1153,45 @@ public class Extras extends Fragment {
                 @Override
                 public void onLocationChanged(Location location) {
                     //float accuracy=location.getAccuracy();
-                    double altitude=location.getAltitude();
-                    double latitude=location.getLatitude();
-                    double longitude=location.getLongitude();
-                    double speed=location.getSpeed();
+                    if (lastLat == 0.0 && lastLon == 0.0) {
+                        lastLat = location.getLatitude();
+                        lastLon = location.getLongitude();
+                    } else {
+                        double altitude = location.getAltitude();
+                        double latitude = location.getLatitude();
+                        double longitude = location.getLongitude();
+                        double speed = location.getSpeed();
+
+                        Location loc1 = new Location("Previous Location");
+                        loc1.setLatitude(lastLat);
+                        loc1.setLongitude(lastLon);
+
+                        Location loc2 = new Location("Current Location");
+                        loc2.setLatitude(latitude);
+                        loc2.setLongitude(longitude);
+
+                        double bear = bearing(lastLat, lastLon,latitude, longitude) ;
+
+                        lastLat = latitude;
+                        lastLon = longitude;
+                        String turn="";
+
+                        if (bear >=30 && bear <=150) {
+                                turn="Right";
+                        }
+                        else {
+                            if (bear>=210 && bear<=330)
+                                turn="Left";
+                        }
+                        /*if (loc1.bearingTo(loc2) >=0) {
+                            if (loc1.bearingTo(loc2) >=30 && loc1.bearingTo(loc2) <=150)
+                                turn="Right";
+                        }
+                        else {
+                            if ((360-loc1.bearingTo(loc2)) >=210 && (360-loc1.bearingTo(loc2))<=330)
+                                turn="Left";
+                        }*/
+
 
                         /*long time=location.getTime();
                         Date date1=new Date(time);
@@ -1131,27 +1199,26 @@ public class Extras extends Fragment {
                         String timeStamp=dateFormat.format(date1);
                         **/
 
-                    long systemTimeInMilli=(new Date()).getTime();
-                    String timestampFormatted=new SimpleDateFormat("MM/dd/yyyy HH:mm:ss").format(new Date(systemTimeInMilli));
-
-                    marker="";
-                    for(String key: landmark.keySet())
-                    {
-                        if(landmark.get(key)!=0)
-                        {
-                            marker+=key+"_"+landmark.get(key)+"+";
+                        long systemTimeInMilli = (new Date()).getTime();
+                        String timestampFormatted = new SimpleDateFormat("MM/dd/yyyy HH:mm:ss").format(new Date(systemTimeInMilli));
+                        marker = "";
+                        for (String key : landmark.keySet()) {
+                            if (landmark.get(key) != 0) {
+                                marker += key + "_" + landmark.get(key) + "+";
+                            }
                         }
+
+                        String locDetails = "\n" + latitude + "," + longitude + "," + speed + "," + altitude + "," + timestampFormatted + "," + marker;
+                        String turnDetails = "\n" + bear + " " + turn;
+                        try {
+                            fosGPS.write(locDetails.getBytes());
+                            fosGPS.write(turnDetails.getBytes());
+
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+
                     }
-
-                    String locDetails="\n"+latitude+","+longitude+","+speed+","+altitude+","+timestampFormatted+","+marker;
-
-                    try {
-                        fosGPS.write(locDetails.getBytes());
-
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-
                 }
 
                 @Override
@@ -1172,12 +1239,58 @@ public class Extras extends Fragment {
                 }
 
             };
-            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1000, 0, locationListener);
+            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 5*1000, 0, locationListener);
             gpsStarted=true;
         } catch(Exception e){
             e.printStackTrace();
         }
         /*}*/
+    }
+
+    /**
+     * Detect and save the turns
+     */
+    private void detectTurns() {
+        String turnFilename="Turns_"+timestamp.toString().replace(' ', '_').replace('-', '_').replace(':', '_').replace('.', '_')+".txt";
+        final File tFile = new File(subfolder, turnFilename);
+        SensorManager turnSensorManager = (SensorManager)getActivity().getSystemService(Context.SENSOR_SERVICE);
+        Sensor gSensor = turnSensorManager.getDefaultSensor(Sensor.TYPE_GRAVITY);
+        Sensor mSensor = turnSensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
+
+        tSensorEventListener = new SensorEventListener() {
+            @Override
+            public void onSensorChanged(SensorEvent event) {
+                if (mAccelerometerValues!=null && mGeomagneticValues!=null) {
+                    switch(event.sensor.getType()){
+                        case Sensor.TYPE_GRAVITY:
+                            System.arraycopy(event.values, 0, mAccelerometerValues, 0, 3);
+                            break;
+                        case Sensor.TYPE_MAGNETIC_FIELD:
+                            System.arraycopy(event.values, 0, mGeomagneticValues, 0, 3);
+                            break;
+                    }
+                    boolean success = SensorManager.getRotationMatrix(mR, mI, mAccelerometerValues, mGeomagneticValues);
+                    if (success) {
+                        SensorManager.remapCoordinateSystem(mR, SensorManager.AXIS_X, SensorManager.AXIS_Y, mROut);
+                        SensorManager.getOrientation(mROut, mOrientation);
+                    }
+                    if (!tInitialized){
+                        mLastX= mOrientation[0];
+                        mLastY = mOrientation[1];
+                        mLastZ = mOrientation[2];
+                        tInitialized = true;
+                    }
+                    else {
+                    }
+                }
+            }
+
+            @Override
+            public void onAccuracyChanged(Sensor sensor, int i) {
+
+            }
+        };
+
     }
 
     private void accStartRecord(){
@@ -1212,9 +1325,30 @@ public class Extras extends Fragment {
                     float x=event.values[0];
                     float y=event.values[1];
                     float z=event.values[2];
-                    //float timestamp=event.timestamp/1000000;
-                    //long timeInMilli=(new Date()).getTime()+((event.timestamp-System.nanoTime())/1000000L);
+                    /*if (!tInitialized) {
+                        mLastX = x;
+                        mLastY = y;
+                        mLastZ = z;
+                        tInitialized = true;
+                    }
+                    else {
+                        float deltaX = (mLastX - x);
+                        float deltaY = (mLastY - y);
+                        float deltaZ = (mLastZ - z);
+                        if (Math.abs(deltaX) < NOISE) deltaX = (float)0.0;
+                        if (Math.abs(deltaY) < NOISE) deltaY = (float)0.0;
+                        if (Math.abs(deltaZ) < NOISE) deltaZ = (float)0.0;
+                        mLastX = x;
+                        mLastY = y;
+                        mLastZ = z;
 
+                        if (deltaX > 2) {
+                            cltrn++;
+                        }
+                        else if (deltaX < -2) {
+                            crtrn++;
+                        }
+                    }*/
                     long systemTimeInMilli=(new Date()).getTime();
                     String timestampFormatted=new SimpleDateFormat("MM/dd/yyyy HH:mm:ss").format(new Date(systemTimeInMilli));
 
@@ -1467,6 +1601,7 @@ public class Extras extends Fragment {
         lightSensorManager=(SensorManager) getActivity().getSystemService(Context.SENSOR_SERVICE);
         lightSensor=lightSensorManager.getDefaultSensor(Sensor.TYPE_LIGHT);
 
+
         date=new Date();
         lightStartTime = date;
 
@@ -1489,11 +1624,10 @@ public class Extras extends Fragment {
                     }
 
                     String lightSensorDetails="\n"+x+","+timestampFormatted+","+marker;
+
                     lightMeter.setProgress((int)event.values[0]);
-                    try{
-
+                    try {
                         fosLGT.write(lightSensorDetails.getBytes());
-
 
                     }catch(Exception e){
                         e.printStackTrace();
@@ -1510,6 +1644,7 @@ public class Extras extends Fragment {
 
             lightSensorManager.registerListener(lightSensorEventListener, lightSensor, SensorManager.SENSOR_DELAY_NORMAL);
             lightStarted = true;
+
         }
     }
 
@@ -1570,8 +1705,11 @@ public class Extras extends Fragment {
         if(accStarted){
             accMeter.setProgress(0);
             try{
+                /*String accSensorDetails = "\nLeft Turn "+cltrn + "\nRight Turn " + crtrn+"\n";
+                fosACC.write(accSensorDetails.getBytes());*/
                 accSensorManager.unregisterListener(accSensorEventListener);
                 fosACC.close();
+                cltrn = crtrn = 0;
 
                 batteryUsage=accSensor.getPower();
                 batteryLoger("ACC", batteryUsage, accStartTime, date);

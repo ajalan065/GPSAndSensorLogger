@@ -30,7 +30,7 @@
         android:id="@+id/radio_group">
 
         <RadioButton
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Bus"
             android:id="@+id/rb_bus"
@@ -41,7 +41,7 @@
             android:layout_marginTop="30dp" />
 
         <RadioButton
-            android:layout_width="wrap_content"
+            android:layout_width="272dp"
             android:layout_height="wrap_content"
             android:text="Scooty"
             android:id="@+id/rb_scooty"
@@ -51,7 +51,7 @@
             android:layout_alignParentLeft="true" />
 
         <RadioButton
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Car"
             android:id="@+id/rb_car"
@@ -61,7 +61,7 @@
             android:layout_alignParentLeft="true" />
 
         <RadioButton
-            android:layout_width="wrap_content"
+            android:layout_width="284dp"
             android:layout_height="wrap_content"
             android:text="Others"
             android:id="@+id/rb_others"

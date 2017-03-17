@@ -5,6 +5,7 @@ import android.app.FragmentManager;
 import android.app.FragmentTransaction;
 import android.content.pm.ActivityInfo;
 import android.graphics.Color;
+import android.os.Handler;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
 import android.view.Menu;
@@ -13,6 +14,7 @@ import android.view.View;
 import android.view.WindowManager;
 import android.widget.EditText;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import static android.content.pm.ActivityInfo.*;
 
@@ -23,6 +25,8 @@ public class MainActivity extends ActionBarActivity implements SelectItemFragmen
     Fragment loggerFragment=new GPSAndSensorLogger();
     Fragment busfinderFragment=new BusFinder();
     Fragment extrasFragment;
+
+    private boolean doubleBackToExitPressedOnce = false;
 
     TextView loggerTxtView,busfinderTxtView,extrasTxtView;
 
@@ -50,6 +54,25 @@ public class MainActivity extends ActionBarActivity implements SelectItemFragmen
         fragmentTransaction.addToBackStack(null);
         fragmentTransaction.commit();
 
+    }
+
+    @Override
+    public void onBackPressed() {
+        if (doubleBackToExitPressedOnce) {
+            super.onBackPressed();
+            return;
+        }
+
+        this.doubleBackToExitPressedOnce = true;
+        Toast.makeText(this, "Tap BACK again to exit", Toast.LENGTH_SHORT).show();
+
+        new Handler().postDelayed(new Runnable() {
+
+            @Override
+            public void run() {
+                doubleBackToExitPressedOnce=false;
+            }
+        }, 2000);
     }
 
     @Override
