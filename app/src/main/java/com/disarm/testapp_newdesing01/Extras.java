@@ -563,7 +563,7 @@ public class Extras extends Fragment {
                     gyrStartTime=date;
                     comStartTime=date;
                     if(gpsStarted)
-                        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1000, 0, locationListener);
+                        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 3000, 0, locationListener);
                     if(accStarted)
                         accSensorManager.registerListener(accSensorEventListener, accSensor, SensorManager.SENSOR_DELAY_NORMAL);
                     if(laccStarted)
@@ -1176,12 +1176,17 @@ public class Extras extends Fragment {
                         lastLon = longitude;
                         String turn="";
 
-                        if (bear >=30 && bear <=150) {
+                        if (bear >=70 && bear <=120) {
                                 turn="Right";
                         }
-                        else {
-                            if (bear>=210 && bear<=330)
+                        else if (bear>=250 && bear<=300) {
                                 turn="Left";
+                        }
+                        else if (bear>120 && bear<=140) {
+                            turn = "Sharp right";
+                        }
+                        else if(bear >250 && bear<=350) {
+                            turn="Sharp left";
                         }
                         /*if (loc1.bearingTo(loc2) >=0) {
                             if (loc1.bearingTo(loc2) >=30 && loc1.bearingTo(loc2) <=150)
